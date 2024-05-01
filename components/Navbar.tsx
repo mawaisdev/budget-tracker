@@ -1,18 +1,21 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import Logo from './Logo'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
-import { buttonVariants } from './ui/button'
+import { Button, buttonVariants } from './ui/button'
 import { UserButton } from '@clerk/nextjs'
 import ThemeSwitcherButton from './ThemeSwitcherButton'
+import { Sheet, SheetContent, SheetTrigger } from './ui/sheet'
+import { Menu } from 'lucide-react'
 
 const Navbar = () => {
   return (
     <>
       <DesktopNavbar />
+      <MobileNavbar />
     </>
   )
 }
@@ -23,19 +26,52 @@ const items = [
   { label: 'Manage', link: '/manage' },
 ]
 
+function MobileNavbar() {
+  const [isOpen, setIsOpen] = useState<boolean>(false)
+  return (
+    <div className='block border-separate bg-background md:hidden'>
+      <nav className='container flex items-center justify-between px-8'>
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+          <SheetTrigger asChild>
+            <Button variant='ghost' size='icon'>
+              <Menu />
+            </Button>
+          </SheetTrigger>
+          <SheetContent className='w-[400px] sm:w-[540px]' side='left'>
+            <Logo showIcon={false} />
+            <div className='flex flex-col' gap-1 pt-4>
+              {items.map(({ label, link }) => (
+                <NavbarItem
+                  key={label}
+                  link={link}
+                  label={label}
+                  onClick={() => setIsOpen((prev) => !prev)}
+                />
+              ))}
+            </div>
+          </SheetContent>
+        </Sheet>
+        <div className='flex h-[80px] min-h-[60px] items-center gap-x-4'>
+          <Logo showIcon={false} />
+        </div>
+        <div className='flex items-center gap-2'>
+          <ThemeSwitcherButton />
+          <UserButton afterSignOutUrl='/sign-in' />
+        </div>
+      </nav>
+    </div>
+  )
+}
+
 function DesktopNavbar() {
   return (
     <div className='hidden border-separate border-b bg-background md:block'>
       <nav className='container flex items-center justify-between px-8'>
         <div className='flex h-[80px] min-[60px] items-center gap-x-4'>
-          <Logo />
+          <Logo showIcon />
           <div className='flex h-full'>
-            {items.map((item) => (
-              <NavbarItem
-                key={item.label}
-                link={item.link}
-                label={item.label}
-              />
+            {items.map(({ label, link }) => (
+              <NavbarItem key={label} link={link} label={label} />
             ))}
           </div>
         </div>
@@ -49,7 +85,15 @@ function DesktopNavbar() {
   )
 }
 
-function NavbarItem({ label, link }: { label: string; link: string }) {
+function NavbarItem({
+  label,
+  link,
+  onClick,
+}: {
+  label: string
+  link: string
+  onClick?: () => void
+}) {
   const pathName = usePathname()
   const isActive = pathName === link
 
@@ -62,6 +106,9 @@ function NavbarItem({ label, link }: { label: string; link: string }) {
           'w-full justify-start text-lg text-muted-foreground hover:text-foreground',
           isActive && 'text-foreground'
         )}
+        onClick={() => {
+          if (onClick) onClick()
+        }}
       >
         {label}
       </Link>
